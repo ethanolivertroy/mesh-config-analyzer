@@ -27,11 +27,7 @@ The analyzer evaluates your MeshConfig against the following security best pract
 
 ## Installation
 
-1. Clone the repository:
-   ```
-   git clone https://your-repo/istio-meshconfig-security-analyzer.git
-   cd istio-meshconfig-security-analyzer
-   ```
+1. Clone the repository.
 
 2. Install dependencies:
    ```
