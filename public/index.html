@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Istio MeshConfig Security Analyzer</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css" rel="stylesheet">
+    <style>
+    /* Catppuccin Mocha Color Palette */
+    :root {
+        --ctp-rosewater: #f5e0dc;
+        --ctp-flamingo: #f2cdcd;
+        --ctp-pink: #f5c2e7;
+        --ctp-mauve: #cba6f7;
+        --ctp-red: #f38ba8;
+        --ctp-maroon: #eba0ac;
+        --ctp-peach: #fab387;
+        --ctp-yellow: #f9e2af;
+        --ctp-green: #a6e3a1;
+        --ctp-teal: #94e2d5;
+        --ctp-sky: #89dceb;
+        --ctp-sapphire: #74c7ec;
+        --ctp-blue: #89b4fa;
+        --ctp-lavender: #b4befe;
+        --ctp-text: #cdd6f4;
+        --ctp-subtext1: #bac2de;
+        --ctp-subtext0: #a6adc8;
+        --ctp-overlay2: #9399b2;
+        --ctp-overlay1: #7f849c;
+        --ctp-overlay0: #6c7086;
+        --ctp-surface2: #585b70;
+        --ctp-surface1: #45475a;
+        --ctp-surface0: #313244;
+        --ctp-base: #1e1e2e;
+        --ctp-mantle: #181825;
+        --ctp-crust: #11111b;
+    }
+
+    /* Result card styles */
+    .result-card {
+        transition: all 0.3s ease;
+    }
+    .result-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3), 0 4px 6px -2px rgba(0, 0, 0, 0.2);
+    }
+    
+    /* Severity styles with Catppuccin colors */
+    .severity-Critical { background-color: rgba(243, 139, 168, 0.15); border-left: 4px solid var(--ctp-red); }
+    .severity-High { background-color: rgba(250, 179, 135, 0.15); border-left: 4px solid var(--ctp-peach); }
+    .severity-Medium { background-color: rgba(249, 226, 175, 0.15); border-left: 4px solid var(--ctp-yellow); }
+    .severity-Low { background-color: rgba(166, 227, 161, 0.15); border-left: 4px solid var(--ctp-green); }
+    </style>
+</head>
+<body class="bg-gray-900 min-h-screen text-gray-100">
+    <header class="text-white p-6 shadow-lg" style="background: linear-gradient(to right, var(--ctp-mauve), var(--ctp-pink));">
+        <div class="container mx-auto">
+            <h1 class="text-3xl font-bold">Istio MeshConfig Security Analyzer</h1>
+            <p class="mt-2 opacity-80">Analyze your Istio mesh configuration for security best practices</p>
+        </div>
+    </header>
+
+    <main class="container mx-auto py-8 px-4">
+        <div class="bg-gray-800 rounded-lg shadow-md p-6 mb-8">
+            <h2 class="text-xl font-semibold mb-4 text-gray-100">Upload MeshConfig</h2>
+            <form id="upload-form" class="space-y-4">
+                <div class="border-2 border-dashed border-gray-600 rounded-lg p-8 text-center" id="drop-area">
+                    <input type="file" id="file-input" class="hidden" accept=".yaml,.yml">
+                    <label for="file-input" class="cursor-pointer">
+                        <svg class="mx-auto h-12 w-12 text-gray-400" stroke="currentColor" fill="none" viewBox="0 0 48 48">
+                            <path d="M24 8l-4 4h-8v24h24v-20h-8l-4-8z" stroke-width="2" stroke-linejoin="round"/>
+                            <path d="M16 28h16M24 20v16" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                        <p class="mt-2 text-sm text-gray-400" id="file-name">Drag and drop a YAML file here, or click to select</p>
+                    </label>
+                </div>
+                <div class="flex justify-end">
+                    <button type="submit" id="analyze-btn" class="text-white font-medium py-2 px-4 rounded-md shadow-sm transition duration-200 disabled:opacity-50" style="background-color: var(--ctp-mauve);" disabled>
+                        Analyze Configuration
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <div id="loading" class="hidden text-center py-12">
+            <div class="animate-spin rounded-full h-16 w-16 border-b-2 mx-auto" style="border-color: var(--ctp-mauve);"></div>
+            <p class="mt-4 text-gray-300">Analyzing configuration...</p>
+        </div>
+
+        <div id="results-container" class="hidden">
+            <div class="bg-gray-800 rounded-lg shadow-md p-6 mb-8">
+                <h2 class="text-xl font-semibold mb-4 text-gray-100">Analysis Summary</h2>
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                    <div class="rounded-lg p-4 text-center" style="background-color: rgba(243, 139, 168, 0.15);">
+                        <div class="text-3xl font-bold" style="color: var(--ctp-red);" id="critical-count">0</div>
+                        <div class="text-sm text-gray-300">Critical Issues</div>
+                    </div>
+                    <div class="rounded-lg p-4 text-center" style="background-color: rgba(250, 179, 135, 0.15);">
+                        <div class="text-3xl font-bold" style="color: var(--ctp-peach);" id="high-count">0</div>
+                        <div class="text-sm text-gray-300">High Issues</div>
+                    </div>
+                    <div class="rounded-lg p-4 text-center" style="background-color: rgba(249, 226, 175, 0.15);">
+                        <div class="text-3xl font-bold" style="color: var(--ctp-yellow);" id="medium-count">0</div>
+                        <div class="text-sm text-gray-300">Medium Issues</div>
+                    </div>
+                    <div class="rounded-lg p-4 text-center" style="background-color: rgba(166, 227, 161, 0.15);">
+                        <div class="text-3xl font-bold" style="color: var(--ctp-green);" id="low-count">0</div>
+                        <div class="text-sm text-gray-300">Low Issues</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-gray-800 rounded-lg shadow-md p-6">
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="text-xl font-semibold text-gray-100">Detailed Findings</h2>
+                    <div class="flex space-x-2">
+                        <button id="filter-all" class="px-3 py-1 rounded-md bg-gray-700 text-sm font-medium text-gray-200">All</button>
+                        <button id="filter-critical" class="px-3 py-1 rounded-md bg-gray-800 text-sm font-medium text-gray-300">Critical</button>
+                        <button id="filter-high" class="px-3 py-1 rounded-md bg-gray-800 text-sm font-medium text-gray-300">High</button>
+                        <button id="filter-medium" class="px-3 py-1 rounded-md bg-gray-800 text-sm font-medium text-gray-300">Medium</button>
+                        <button id="filter-low" class="px-3 py-1 rounded-md bg-gray-800 text-sm font-medium text-gray-300">Low</button>
+                    </div>
+                </div>
+                <div id="findings-list" class="space-y-4">
+                    <!-- Findings will be inserted here dynamically -->
+                </div>
+            </div>
+        </div>
+    </main>
+
+<footer class="py-6 mt-8" style="background-color: var(--ctp-mantle);">
+    <div class="container mx-auto px-4 text-center">
+        <p class="text-gray-300">
+            Made with <span class="text-purple-400">🧪</span> by <a href="https://gitlab.com/ethanolivertroy" class="text-gray-100 hover:text-purple-300 transition duration-200">ET👽</a>
+        </p>
+    </div>
+</footer>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const form = document.getElementById('upload-form');
+            const fileInput = document.getElementById('file-input');
+            const fileNameDisplay = document.getElementById('file-name');
+            const analyzeBtn = document.getElementById('analyze-btn');
+            const dropArea = document.getElementById('drop-area');
+            const loadingDiv = document.getElementById('loading');
+            const resultsContainer = document.getElementById('results-container');
+            const findingsList = document.getElementById('findings-list');
+            
+            // File selection and drag/drop logic
+            fileInput.addEventListener('change', () => {
+                if (fileInput.files.length > 0) {
+                    fileNameDisplay.textContent = fileInput.files[0].name;
+                    analyzeBtn.disabled = false;
+                    dropArea.classList.add('border-purple-500');
+                    dropArea.classList.remove('border-gray-600');
+                } else {
+                    fileNameDisplay.textContent = 'Drag and drop a YAML file here, or click to select';
+                    analyzeBtn.disabled = true;
+                    dropArea.classList.remove('border-purple-500');
+                    dropArea.classList.add('border-gray-600');
+                }
+            });
+            
+            // Drag and drop functionality
+            ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+                dropArea.addEventListener(eventName, (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                }, false);
+            });
+            
+            ['dragenter', 'dragover'].forEach(eventName => {
+                dropArea.addEventListener(eventName, () => {
+                    dropArea.classList.add('border-purple-500');
+                    dropArea.classList.remove('border-gray-600');
+                }, false);
+            });
+            
+            ['dragleave', 'drop'].forEach(eventName => {
+                dropArea.addEventListener(eventName, () => {
+                    dropArea.classList.remove('border-purple-500');
+                    dropArea.classList.add('border-gray-600');
+                }, false);
+            });
+            
+            dropArea.addEventListener('drop', (e) => {
+                fileInput.files = e.dataTransfer.files;
+                if (fileInput.files.length > 0) {
+                    fileNameDisplay.textContent = fileInput.files[0].name;
+                    analyzeBtn.disabled = false;
+                }
+            }, false);
+            
+            // Form submission
+            form.addEventListener('submit', (e) => {
+                e.preventDefault();
+                
+                if (!fileInput.files[0]) {
+                    return;
+                }
+                
+                const formData = new FormData();
+                formData.append('meshconfig', fileInput.files[0]);
+                
+                // Show loading spinner
+                form.classList.add('hidden');
+                loadingDiv.classList.remove('hidden');
+                resultsContainer.classList.add('hidden');
+                
+                fetch('/analyze', {
+                    method: 'POST',
+                    body: formData
+                })
+                .then(response => response.json())
+                .then(data => {
+                    // Hide loading spinner
+                    loadingDiv.classList.add('hidden');
+                    
+                    if (data.success) {
+                        // Display results
+                        displayResults(data);
+                        resultsContainer.classList.remove('hidden');
+                    } else {
+                        alert('Error: ' + data.message);
+                        form.classList.remove('hidden');
+                    }
+                })
+                .catch(error => {
+                    loadingDiv.classList.add('hidden');
+                    form.classList.remove('hidden');
+                    alert('Error: ' + error.message);
+                });
+            });
+            
+            // Filter buttons
+            document.getElementById('filter-all').addEventListener('click', () => applyFilter('all'));
+            document.getElementById('filter-critical').addEventListener('click', () => applyFilter('Critical'));
+            document.getElementById('filter-high').addEventListener('click', () => applyFilter('High'));
+            document.getElementById('filter-medium').addEventListener('click', () => applyFilter('Medium'));
+            document.getElementById('filter-low').addEventListener('click', () => applyFilter('Low'));
+            
+            function applyFilter(severity) {
+                // Update button styles
+                const buttons = document.querySelectorAll('[id^="filter-"]');
+                buttons.forEach(button => {
+                    button.classList.remove('bg-gray-700');
+                    button.classList.add('bg-gray-800');
+                });
+                document.getElementById(`filter-${severity.toLowerCase()}`).classList.add('bg-gray-700');
+                document.getElementById(`filter-${severity.toLowerCase()}`).classList.remove('bg-gray-800');
+                
+                // Filter findings
+                const findings = document.querySelectorAll('.finding-item');
+                findings.forEach(finding => {
+                    if (severity === 'all' || finding.getAttribute('data-severity') === severity) {
+                        finding.classList.remove('hidden');
+                    } else {
+                        finding.classList.add('hidden');
+                    }
+                });
+            }
+            
+            function displayResults(data) {
+                // Update summary counts
+                document.getElementById('critical-count').textContent = data.summary.critical;
+                document.getElementById('high-count').textContent = data.summary.high;
+                document.getElementById('medium-count').textContent = data.summary.medium;
+                document.getElementById('low-count').textContent = data.summary.low;
+                
+                // Clear previous findings
+                findingsList.innerHTML = '';
+                
+                if (data.findings.length === 0) {
+                    findingsList.innerHTML = '<div class="text-center py-8 text-gray-300">No issues found! Your configuration follows security best practices.</div>';
+                    return;
+                }
+                
+                // Sort findings by severity
+                const sortOrder = { 'Critical': 0, 'High': 1, 'Medium': 2, 'Low': 3 };
+                data.findings.sort((a, b) => sortOrder[a.severity] - sortOrder[b.severity]);
+                
+                // Create finding cards
+                data.findings.forEach(finding => {
+                    const findingElement = document.createElement('div');
+                    findingElement.classList.add('finding-item', 'result-card', 'p-4', 'rounded-lg', `severity-${finding.severity}`);
+                    findingElement.setAttribute('data-severity', finding.severity);
+                    
+                    const colors = {
+                        'Critical': 'var(--ctp-red)',
+                        'High': 'var(--ctp-peach)',
+                        'Medium': 'var(--ctp-yellow)',
+                        'Low': 'var(--ctp-green)'
+                    };
+                    
+                    const badgeClasses = {
+                        'Critical': 'bg-red-900 bg-opacity-50 text-red-200',
+                        'High': 'bg-orange-900 bg-opacity-50 text-orange-200',
+                        'Medium': 'bg-yellow-900 bg-opacity-50 text-yellow-200',
+                        'Low': 'bg-green-900 bg-opacity-50 text-green-200'
+                    };
+                    
+                    const color = colors[finding.severity] || colors['Medium'];
+                    
+                    findingElement.innerHTML = `
+                        <div class="flex items-start">
+                            <div class="flex-shrink-0">
+                                <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="color: ${color}">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="${finding.severity === 'Critical' || finding.severity === 'High' ? 
+                                    'M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z' : 
+                                    'M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z'}"/>
+                                </svg>
+                            </div>
+                            <div class="ml-3 flex-1">
+                                <div class="flex items-center justify-between">
+                                    <h3 class="text-lg font-medium text-gray-200">${finding.category}</h3>
+                                    <span class="px-2 py-1 text-xs rounded-full ${badgeClasses[finding.severity]}">
+                                        ${finding.severity}
+                                    </span>
+                                </div>
+                                <p class="mt-1 text-gray-300">${finding.message}</p>
+                                <div class="mt-2">
+                                    <p class="text-sm font-medium text-gray-400">Recommendation:</p>
+                                    <p class="text-sm text-gray-300">${finding.recommendation}</p>
+                                </div>
+                                ${finding.location ? `
+                                <div class="mt-2">
+                                    <p class="text-sm font-medium text-gray-400">Location:</p>
+                                    <code class="text-sm bg-gray-700 text-gray-200 px-2 py-1 rounded">${finding.location}</code>
+                                </div>` : ''}
+                            </div>
+                        </div>
+                    `;
+                    
+                    findingsList.appendChild(findingElement);
+                });
+            }
+            
+            function getSeverityIcon(severity) {
+                const colors = {
+                    'Critical': 'var(--ctp-red)',
+                    'High': 'var(--ctp-peach)',
+                    'Medium': 'var(--ctp-yellow)',
+                    'Low': 'var(--ctp-green)'
+                };
+                
+                const color = colors[severity] || colors['Medium'];
+                
+                const icons = {
+                    'Critical': `<svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="color: ${color}"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>`,
+                    'High': `<svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="color: ${color}"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>`,
+                    'Medium': `<svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="color: ${color}"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>`,
+                    'Low': `<svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="color: ${color}"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>`
+                };
+                return icons[severity] || icons['Medium'];
+            }
+            
+            function getSeverityBadgeClass(severity) {
+                const classes = {
+                    'Critical': 'bg-red-900 bg-opacity-50 text-red-200',
+                    'High': 'bg-orange-900 bg-opacity-50 text-orange-200',
+                    'Medium': 'bg-yellow-900 bg-opacity-50 text-yellow-200',
+                    'Low': 'bg-green-900 bg-opacity-50 text-green-200'
+                };
+                return classes[severity] || classes['Medium'];
+            }
+        });
+    </script>
+</body>
+</html>
