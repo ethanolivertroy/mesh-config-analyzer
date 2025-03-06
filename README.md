@@ -2,6 +2,8 @@
 
 A web application for analyzing Istio MeshConfig resources against security best practices.
 
+![alt text](image.png)
+
 ## Features
 
 - Upload and analyze Istio MeshConfig YAML files
