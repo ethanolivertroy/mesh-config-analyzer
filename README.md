@@ -2,6 +2,10 @@
 
 A web application for analyzing service mesh configurations against security best practices. Currently supports Istio, Consul, and Linkerd service meshes.
 
+![](interface.png)
+
+![](sample-results.png)
+
 ## Features
 
 - Upload and analyze Istio, Consul, and Linkerd service mesh configurations
