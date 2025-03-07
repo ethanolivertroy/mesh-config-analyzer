@@ -3,11 +3,132 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Istio MeshConfig Security Analyzer</title>
+    <title>Service Mesh Configuration Security Analyzer</title>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css" rel="stylesheet">
     <style>
-    /* Catppuccin Mocha Color Palette */
+    /* Catppuccin Palettes */
     :root {
+        /* Default Theme: Mocha (will be overridden by theme selection) */
+        --ctp-rosewater: #f5e0dc;
+        --ctp-flamingo: #f2cdcd;
+        --ctp-pink: #f5c2e7;
+        --ctp-mauve: #cba6f7;
+        --ctp-red: #f38ba8;
+        --ctp-maroon: #eba0ac;
+        --ctp-peach: #fab387;
+        --ctp-yellow: #f9e2af;
+        --ctp-green: #a6e3a1;
+        --ctp-teal: #94e2d5;
+        --ctp-sky: #89dceb;
+        --ctp-sapphire: #74c7ec;
+        --ctp-blue: #89b4fa;
+        --ctp-lavender: #b4befe;
+        --ctp-text: #cdd6f4;
+        --ctp-subtext1: #bac2de;
+        --ctp-subtext0: #a6adc8;
+        --ctp-overlay2: #9399b2;
+        --ctp-overlay1: #7f849c;
+        --ctp-overlay0: #6c7086;
+        --ctp-surface2: #585b70;
+        --ctp-surface1: #45475a;
+        --ctp-surface0: #313244;
+        --ctp-base: #1e1e2e;
+        --ctp-mantle: #181825;
+        --ctp-crust: #11111b;
+    }
+    
+    /* Latte */
+    [data-theme="latte"] {
+        --ctp-rosewater: #dc8a78;
+        --ctp-flamingo: #dd7878;
+        --ctp-pink: #ea76cb;
+        --ctp-mauve: #8839ef;
+        --ctp-red: #d20f39;
+        --ctp-maroon: #e64553;
+        --ctp-peach: #fe640b;
+        --ctp-yellow: #df8e1d;
+        --ctp-green: #40a02b;
+        --ctp-teal: #179299;
+        --ctp-sky: #04a5e5;
+        --ctp-sapphire: #209fb5;
+        --ctp-blue: #1e66f5;
+        --ctp-lavender: #7287fd;
+        --ctp-text: #4c4f69;
+        --ctp-subtext1: #5c5f77;
+        --ctp-subtext0: #6c6f85;
+        --ctp-overlay2: #7c7f93;
+        --ctp-overlay1: #8c8fa1;
+        --ctp-overlay0: #9ca0b0;
+        --ctp-surface2: #acb0be;
+        --ctp-surface1: #bcc0cc;
+        --ctp-surface0: #ccd0da;
+        --ctp-base: #eff1f5;
+        --ctp-mantle: #e6e9ef;
+        --ctp-crust: #dce0e8;
+    }
+    
+    /* Frappé */
+    [data-theme="frappe"] {
+        --ctp-rosewater: #f2d5cf;
+        --ctp-flamingo: #eebebe;
+        --ctp-pink: #f4b8e4;
+        --ctp-mauve: #ca9ee6;
+        --ctp-red: #e78284;
+        --ctp-maroon: #ea999c;
+        --ctp-peach: #ef9f76;
+        --ctp-yellow: #e5c890;
+        --ctp-green: #a6d189;
+        --ctp-teal: #81c8be;
+        --ctp-sky: #99d1db;
+        --ctp-sapphire: #85c1dc;
+        --ctp-blue: #8caaee;
+        --ctp-lavender: #babbf1;
+        --ctp-text: #c6d0f5;
+        --ctp-subtext1: #b5bfe2;
+        --ctp-subtext0: #a5adce;
+        --ctp-overlay2: #949cbb;
+        --ctp-overlay1: #838ba7;
+        --ctp-overlay0: #737994;
+        --ctp-surface2: #626880;
+        --ctp-surface1: #51576d;
+        --ctp-surface0: #414559;
+        --ctp-base: #303446;
+        --ctp-mantle: #292c3c;
+        --ctp-crust: #232634;
+    }
+    
+    /* Macchiato */
+    [data-theme="macchiato"] {
+        --ctp-rosewater: #f4dbd6;
+        --ctp-flamingo: #f0c6c6;
+        --ctp-pink: #f5bde6;
+        --ctp-mauve: #c6a0f6;
+        --ctp-red: #ed8796;
+        --ctp-maroon: #ee99a0;
+        --ctp-peach: #f5a97f;
+        --ctp-yellow: #eed49f;
+        --ctp-green: #a6da95;
+        --ctp-teal: #8bd5ca;
+        --ctp-sky: #91d7e3;
+        --ctp-sapphire: #7dc4e4;
+        --ctp-blue: #8aadf4;
+        --ctp-lavender: #b7bdf8;
+        --ctp-text: #cad3f5;
+        --ctp-subtext1: #b8c0e0;
+        --ctp-subtext0: #a5adcb;
+        --ctp-overlay2: #939ab7;
+        --ctp-overlay1: #8087a2;
+        --ctp-overlay0: #6e738d;
+        --ctp-surface2: #5b6078;
+        --ctp-surface1: #494d64;
+        --ctp-surface0: #363a4f;
+        --ctp-base: #24273a;
+        --ctp-mantle: #1e2030;
+        --ctp-crust: #181926;
+    }
+    
+    /* Mocha */
+    [data-theme="mocha"] {
         --ctp-rosewater: #f5e0dc;
         --ctp-flamingo: #f2cdcd;
         --ctp-pink: #f5c2e7;
@@ -46,36 +167,252 @@
     }
     
     /* Severity styles with Catppuccin colors */
-    .severity-Critical { background-color: rgba(243, 139, 168, 0.15); border-left: 4px solid var(--ctp-red); }
-    .severity-High { background-color: rgba(250, 179, 135, 0.15); border-left: 4px solid var(--ctp-peach); }
-    .severity-Medium { background-color: rgba(249, 226, 175, 0.15); border-left: 4px solid var(--ctp-yellow); }
-    .severity-Low { background-color: rgba(166, 227, 161, 0.15); border-left: 4px solid var(--ctp-green); }
+    .severity-Critical { background-color: rgba(243, 139, 168, 0.1); border-left: 4px solid var(--ctp-red); }
+    .severity-High { background-color: rgba(250, 179, 135, 0.1); border-left: 4px solid var(--ctp-peach); }
+    .severity-Medium { background-color: rgba(249, 226, 175, 0.1); border-left: 4px solid var(--ctp-yellow); }
+    .severity-Low { background-color: rgba(166, 227, 161, 0.1); border-left: 4px solid var(--ctp-green); }
+    
+    /* NIST control badge styles */
+    .nist-control {
+        display: inline-block;
+        background-color: rgba(203, 166, 247, 0.2);
+        color: var(--ctp-mauve);
+        border: 1px solid var(--ctp-mauve);
+        padding: 2px 6px;
+        margin: 2px;
+        border-radius: 4px;
+        font-size: 0.75rem;
+        cursor: help;
+        position: relative;
+    }
+    
+    .nist-control:hover::after {
+        content: attr(data-title);
+        position: absolute;
+        bottom: 100%;
+        left: 50%;
+        transform: translateX(-50%);
+        background-color: var(--ctp-surface0);
+        color: var(--ctp-text);
+        border: 1px solid var(--ctp-mauve);
+        padding: 6px 10px;
+        border-radius: 4px;
+        white-space: nowrap;
+        z-index: 10;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+        width: max-content;
+        max-width: 300px;
+    }
+    
+    .nist-guidance {
+        background-color: rgba(137, 180, 250, 0.1);
+        border-left: 3px solid var(--ctp-blue);
+        padding: 10px;
+        margin-top: 20px;
+        border-radius: 0 4px 4px 0;
+        font-style: italic;
+        position: relative;
+    }
+    
+    .nist-guidance-title {
+        position: absolute;
+        top: -10px;
+        left: 10px;
+        background-color: var(--ctp-blue);
+        color: var(--ctp-base);
+        padding: 2px 8px;
+        border-radius: 4px;
+        font-size: 0.7rem;
+        font-weight: bold;
+        text-transform: uppercase;
+    }
+    
+    /* Theme Switcher Styles */
+    
+    .theme-option {
+        width: 30px;
+        height: 30px;
+        border-radius: 50%;
+        margin: 4px;
+        cursor: pointer;
+        position: relative;
+        transition: transform 0.2s;
+        border: 2px solid transparent;
+    }
+    
+    .theme-option:hover {
+        transform: scale(1.1);
+    }
+    
+    .theme-option.active {
+        border-color: var(--ctp-text);
+    }
+    
+    .latte-option {
+        background: linear-gradient(45deg, #eff1f5, #dc8a78);
+    }
+    
+    .frappe-option {
+        background: linear-gradient(45deg, #303446, #eebebe);
+    }
+    
+    .macchiato-option {
+        background: linear-gradient(45deg, #24273a, #f5bde6);
+    }
+    
+    .mocha-option {
+        background: linear-gradient(45deg, #1e1e2e, #cba6f7);
+    }
+    
+    /* Base Theme-Dependent Styles */
+    body {
+        background-color: var(--ctp-base);
+        color: var(--ctp-text);
+        transition: all 0.3s ease;
+    }
+    
+    .bg-card {
+        background-color: var(--ctp-surface0);
+    }
+    
+    .text-muted {
+        color: var(--ctp-subtext0);
+    }
+    
+    input, select, textarea {
+        background-color: var(--ctp-surface0);
+        color: var(--ctp-text);
+        border-color: var(--ctp-overlay0);
+    }
+    
+    button.primary {
+        background-color: var(--ctp-mauve);
+        color: var(--ctp-base);
+    }
+    
+    .header-gradient {
+        background: linear-gradient(to right, var(--ctp-surface0), var(--ctp-surface1));
+    }
+    
+    .header-text {
+        color: var(--ctp-mauve);
+    }
     </style>
 </head>
-<body class="bg-gray-900 min-h-screen text-gray-100">
-    <header class="text-black p-6 shadow-lg" style="background: linear-gradient(to right, var(--ctp-mauve), var(--ctp-pink));">
-        <div class="container mx-auto">
-            <h1 class="text-3xl font-bold">Istio MeshConfig Security Analyzer</h1>
-            <p class="mt-2 opacity-80">Analyze your Istio mesh configuration for security best practices</p>
+<body class="min-h-screen" data-theme="mocha">
+    <header class="p-6 shadow-lg header-gradient">
+        <div class="container mx-auto flex justify-between items-center">
+            <div>
+                <h1 class="text-3xl font-bold header-text">Service Mesh Configuration Security Analyzer</h1>
+                <p class="mt-2 text-muted">Analyze your service mesh configuration for security best practices and NIST 800-53 compliance</p>
+            </div>
+            
+            <!-- Theme Switcher (embedded in header) -->
+            <div class="flex space-x-2 items-center">
+                <span class="text-sm text-muted mr-2">Theme:</span>
+                <div class="theme-option latte-option" data-theme="latte" title="Latte - Light theme"></div>
+                <div class="theme-option frappe-option" data-theme="frappe" title="Frappé - Low contrast dark theme"></div>
+                <div class="theme-option macchiato-option" data-theme="macchiato" title="Macchiato - Medium contrast dark theme"></div>
+                <div class="theme-option mocha-option active" data-theme="mocha" title="Mocha - High contrast dark theme"></div>
+            </div>
         </div>
     </header>
 
     <main class="container mx-auto py-8 px-4">
-        <div class="bg-gray-800 rounded-lg shadow-md p-6 mb-8">
-            <h2 class="text-xl font-semibold mb-4 text-gray-100">Upload MeshConfig</h2>
+        <div class="rounded-lg shadow-md p-6 mb-8 bg-card">
+            <h2 class="text-xl font-semibold mb-4">Upload Configuration File</h2>
             <form id="upload-form" class="space-y-4">
-                <div class="border-2 border-dashed border-gray-600 rounded-lg p-8 text-center" id="drop-area">
-                    <input type="file" id="file-input" class="hidden" accept=".yaml,.yml">
+                <div class="border-2 border-dashed rounded-lg p-8 text-center" style="border-color: var(--ctp-overlay0);" id="drop-area">
+                    <input type="file" id="file-input" class="hidden" accept=".yaml,.yml,.json">
                     <label for="file-input" class="cursor-pointer">
-                        <svg class="mx-auto h-12 w-12 text-gray-400" stroke="currentColor" fill="none" viewBox="0 0 48 48">
+                        <svg class="mx-auto h-12 w-12" style="color: var(--ctp-overlay1);" stroke="currentColor" fill="none" viewBox="0 0 48 48">
                             <path d="M24 8l-4 4h-8v24h24v-20h-8l-4-8z" stroke-width="2" stroke-linejoin="round"/>
                             <path d="M16 28h16M24 20v16" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                         </svg>
-                        <p class="mt-2 text-sm text-gray-400" id="file-name">Drag and drop a YAML file here, or click to select</p>
+                        <p class="mt-2 text-sm" style="color: var(--ctp-overlay1);" id="file-name">Drag and drop a configuration file here (YAML, JSON), or click to select</p>
                     </label>
                 </div>
+                
+                <!-- Instructions for finding mesh configs -->
+                <div class="mt-6 p-4 rounded-lg" style="background-color: var(--ctp-surface0); border-left: 3px solid var(--ctp-mauve);">
+                    <details class="text-sm">
+                        <summary class="font-semibold cursor-pointer flex items-center">
+                            <svg class="h-5 w-5 mr-2" style="color: var(--ctp-mauve);" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                            </svg>
+                            Need help finding your config files?
+                        </summary>
+                        <div class="mt-4 space-y-5 pl-2">
+                            <div class="p-3 rounded-lg" style="background-color: rgba(116, 199, 236, 0.1); border: 1px solid var(--ctp-sapphire);">
+                                <h4 class="font-semibold flex items-center" style="color: var(--ctp-sapphire);">
+                                    <svg class="h-5 w-5 mr-2" viewBox="0 0 24 24" fill="none" stroke="currentColor" style="color: var(--ctp-sapphire);">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9"/>
+                                    </svg>
+                                    Istio MeshConfig Files
+                                </h4>
+                                <div class="mt-2 p-3 rounded text-sm overflow-x-auto" style="background-color: var(--ctp-surface1);">
+                                    <code>kubectl -n istio-system get configmap istio -o jsonpath='{.data.mesh}' > istio-meshconfig.yaml</code>
+                                </div>
+                                <div class="mt-2 text-xs flex items-start">
+                                    <svg class="h-4 w-4 mr-1 mt-0.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="color: var(--ctp-peach);">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+                                    </svg>
+                                    <span class="text-muted">For older versions: <code>kubectl -n istio-system get cm istio -o yaml</code></span>
+                                </div>
+                            </div>
+                            
+                            <div class="p-3 rounded-lg" style="background-color: rgba(202, 158, 230, 0.1); border: 1px solid var(--ctp-mauve);">
+                                <h4 class="font-semibold flex items-center" style="color: var(--ctp-mauve);">
+                                    <svg class="h-5 w-5 mr-2" viewBox="0 0 24 24" fill="none" stroke="currentColor" style="color: var(--ctp-mauve);">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"/>
+                                    </svg>
+                                    Consul Service Mesh Configuration
+                                </h4>
+                                <div class="mt-2 p-3 rounded text-sm overflow-x-auto" style="background-color: var(--ctp-surface1);">
+                                    <code>kubectl -n consul get configmap consul-server -o jsonpath='{.data.server\\.json}' > consul-config.json</code>
+                                </div>
+                                <div class="mt-2 text-xs flex items-start">
+                                    <svg class="h-4 w-4 mr-1 mt-0.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="color: var(--ctp-peach);">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+                                    </svg>
+                                    <span class="text-muted">For standalone Consul: <code>consul config read -name default > consul-config.json</code></span>
+                                </div>
+                                <div class="mt-1 text-xs flex items-start">
+                                    <svg class="h-4 w-4 mr-1 mt-0.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="color: var(--ctp-green);">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                    </svg>
+                                    <span class="text-muted">For local file: <code>cat /etc/consul/consul.hcl</code> or <code>/etc/consul/consul.d/*.json</code></span>
+                                </div>
+                            </div>
+                            
+                            <div class="p-3 rounded-lg" style="background-color: rgba(148, 226, 213, 0.1); border: 1px solid var(--ctp-teal);">
+                                <h4 class="font-semibold flex items-center" style="color: var(--ctp-teal);">
+                                    <svg class="h-5 w-5 mr-2" viewBox="0 0 24 24" fill="none" stroke="currentColor" style="color: var(--ctp-teal);">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"/>
+                                    </svg>
+                                    Linkerd Configuration Files
+                                </h4>
+                                <div class="mt-2 p-3 rounded text-sm overflow-x-auto" style="background-color: var(--ctp-surface1);">
+                                    <code>linkerd install --dry-run > linkerd-config.yaml</code>
+                                </div>
+                                <div class="mt-2 text-xs flex items-start">
+                                    <svg class="h-4 w-4 mr-1 mt-0.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="color: var(--ctp-peach);">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+                                    </svg>
+                                    <span class="text-muted">For Kubernetes: <code>kubectl -n linkerd get cm linkerd-config -o yaml</code></span>
+                                </div>
+                                <div class="mt-1 text-xs flex items-start">
+                                    <svg class="h-4 w-4 mr-1 mt-0.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="color: var(--ctp-green);">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                    </svg>
+                                    <span class="text-muted">For proxy config: <code>kubectl -n linkerd get cm linkerd-proxy-config -o yaml</code></span>
+                                </div>
+                            </div>
+                        </div>
+                    </details>
+                </div>
                 <div class="flex justify-end">
-                    <button type="submit" id="analyze-btn" class="text-white font-medium py-2 px-4 rounded-md shadow-sm transition duration-200 disabled:opacity-50" style="background-color: var(--ctp-mauve);" disabled>
+                    <button type="submit" id="analyze-btn" class="font-medium py-2 px-4 rounded-md shadow-sm transition duration-200 disabled:opacity-50 primary" disabled>
                         Analyze Configuration
                     </button>
                 </div>
@@ -84,41 +421,47 @@
 
         <div id="loading" class="hidden text-center py-12">
             <div class="animate-spin rounded-full h-16 w-16 border-b-2 mx-auto" style="border-color: var(--ctp-mauve);"></div>
-            <p class="mt-4 text-gray-300">Analyzing configuration...</p>
+            <p class="mt-4 text-muted">Analyzing configuration...</p>
         </div>
 
         <div id="results-container" class="hidden">
-            <div class="bg-gray-800 rounded-lg shadow-md p-6 mb-8">
-                <h2 class="text-xl font-semibold mb-4 text-gray-100">Analysis Summary</h2>
+            <div class="rounded-lg shadow-md p-6 mb-8 bg-card">
+                <h2 class="text-xl font-semibold mb-4">Analysis Summary</h2>
+                <div id="mesh-type-container" class="mb-4 p-2 rounded flex items-center" style="background-color: rgba(203, 166, 247, 0.1); border: 1px solid var(--ctp-mauve);">
+                    <svg class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="color: var(--ctp-mauve)">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
+                    </svg>
+                    <span id="mesh-type-text" class="text-sm font-medium">Detected Mesh Type: <span style="color: var(--ctp-mauve);">Unknown</span></span>
+                </div>
                 <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
-                    <div class="rounded-lg p-4 text-center" style="background-color: rgba(243, 139, 168, 0.15);">
+                    <div class="rounded-lg p-4 text-center" style="background-color: rgba(243, 139, 168, 0.1); border: 1px solid var(--ctp-red);">
                         <div class="text-3xl font-bold" style="color: var(--ctp-red);" id="critical-count">0</div>
-                        <div class="text-sm text-gray-300">Critical Issues</div>
+                        <div class="text-sm text-muted">Critical Issues</div>
                     </div>
-                    <div class="rounded-lg p-4 text-center" style="background-color: rgba(250, 179, 135, 0.15);">
+                    <div class="rounded-lg p-4 text-center" style="background-color: rgba(250, 179, 135, 0.1); border: 1px solid var(--ctp-peach);">
                         <div class="text-3xl font-bold" style="color: var(--ctp-peach);" id="high-count">0</div>
-                        <div class="text-sm text-gray-300">High Issues</div>
+                        <div class="text-sm text-muted">High Issues</div>
                     </div>
-                    <div class="rounded-lg p-4 text-center" style="background-color: rgba(249, 226, 175, 0.15);">
+                    <div class="rounded-lg p-4 text-center" style="background-color: rgba(249, 226, 175, 0.1); border: 1px solid var(--ctp-yellow);">
                         <div class="text-3xl font-bold" style="color: var(--ctp-yellow);" id="medium-count">0</div>
-                        <div class="text-sm text-gray-300">Medium Issues</div>
+                        <div class="text-sm text-muted">Medium Issues</div>
                     </div>
-                    <div class="rounded-lg p-4 text-center" style="background-color: rgba(166, 227, 161, 0.15);">
+                    <div class="rounded-lg p-4 text-center" style="background-color: rgba(166, 227, 161, 0.1); border: 1px solid var(--ctp-green);">
                         <div class="text-3xl font-bold" style="color: var(--ctp-green);" id="low-count">0</div>
-                        <div class="text-sm text-gray-300">Low Issues</div>
+                        <div class="text-sm text-muted">Low Issues</div>
                     </div>
                 </div>
             </div>
 
-            <div class="bg-gray-800 rounded-lg shadow-md p-6">
+            <div class="rounded-lg shadow-md p-6 bg-card">
                 <div class="flex justify-between items-center mb-4">
-                    <h2 class="text-xl font-semibold text-gray-100">Detailed Findings</h2>
+                    <h2 class="text-xl font-semibold">Detailed Findings</h2>
                     <div class="flex space-x-2">
-                        <button id="filter-all" class="px-3 py-1 rounded-md bg-gray-700 text-sm font-medium text-gray-200">All</button>
-                        <button id="filter-critical" class="px-3 py-1 rounded-md bg-gray-800 text-sm font-medium text-gray-300">Critical</button>
-                        <button id="filter-high" class="px-3 py-1 rounded-md bg-gray-800 text-sm font-medium text-gray-300">High</button>
-                        <button id="filter-medium" class="px-3 py-1 rounded-md bg-gray-800 text-sm font-medium text-gray-300">Medium</button>
-                        <button id="filter-low" class="px-3 py-1 rounded-md bg-gray-800 text-sm font-medium text-gray-300">Low</button>
+                        <button id="filter-all" class="px-3 py-1 rounded-md text-sm font-medium" style="background-color: var(--ctp-surface1);">All</button>
+                        <button id="filter-critical" class="px-3 py-1 rounded-md text-sm font-medium text-muted" style="background-color: var(--ctp-surface0);">Critical</button>
+                        <button id="filter-high" class="px-3 py-1 rounded-md text-sm font-medium text-muted" style="background-color: var(--ctp-surface0);">High</button>
+                        <button id="filter-medium" class="px-3 py-1 rounded-md text-sm font-medium text-muted" style="background-color: var(--ctp-surface0);">Medium</button>
+                        <button id="filter-low" class="px-3 py-1 rounded-md text-sm font-medium text-muted" style="background-color: var(--ctp-surface0);">Low</button>
                     </div>
                 </div>
                 <div id="findings-list" class="space-y-4">
@@ -130,14 +473,46 @@
 
 <footer class="py-6 mt-8" style="background-color: var(--ctp-mantle);">
     <div class="container mx-auto px-4 text-center">
-        <p class="text-gray-300">
-            Made with <span class="text-purple-400">🧪</span> by <a href="https://gitlab.com/ethanolivertroy" class="text-gray-100 hover:text-purple-300 transition duration-200">ET👽</a>
+        <p class="text-muted">
+            Made with <span style="color: var(--ctp-mauve);">🧪</span> by <a href="https://gitlab.com/ethanolivertroy" style="color: var(--ctp-text);" class="hover:text-mauve transition duration-200">ET👽</a>
         </p>
+        <p class="text-xs text-muted mt-2">Supports Istio, Consul, and Linkerd service meshes</p>
     </div>
 </footer>
 
     <script>
         document.addEventListener('DOMContentLoaded', () => {
+            // Theme switcher functionality
+            const themeSwitcher = document.querySelectorAll('.theme-option');
+            const body = document.body;
+            
+            // Apply theme from localStorage if available
+            const savedTheme = localStorage.getItem('selectedTheme') || 'mocha';
+            body.setAttribute('data-theme', savedTheme);
+            updateActiveTheme(savedTheme);
+            
+            // Theme switching
+            themeSwitcher.forEach(option => {
+                option.addEventListener('click', () => {
+                    const theme = option.getAttribute('data-theme');
+                    body.setAttribute('data-theme', theme);
+                    localStorage.setItem('selectedTheme', theme);
+                    updateActiveTheme(theme);
+                });
+            });
+            
+            function updateActiveTheme(theme) {
+                // Update active state in UI
+                themeSwitcher.forEach(option => {
+                    if (option.getAttribute('data-theme') === theme) {
+                        option.classList.add('active');
+                    } else {
+                        option.classList.remove('active');
+                    }
+                });
+            }
+            
+            // Form handling 
             const form = document.getElementById('upload-form');
             const fileInput = document.getElementById('file-input');
             const fileNameDisplay = document.getElementById('file-name');
@@ -152,13 +527,13 @@
                 if (fileInput.files.length > 0) {
                     fileNameDisplay.textContent = fileInput.files[0].name;
                     analyzeBtn.disabled = false;
-                    dropArea.classList.add('border-purple-500');
-                    dropArea.classList.remove('border-gray-600');
+                    dropArea.style.borderColor = 'var(--ctp-mauve)';
+                    fileNameDisplay.style.color = 'var(--ctp-text)';
                 } else {
-                    fileNameDisplay.textContent = 'Drag and drop a YAML file here, or click to select';
+                    fileNameDisplay.textContent = 'Drag and drop a configuration file here (YAML, JSON), or click to select';
                     analyzeBtn.disabled = true;
-                    dropArea.classList.remove('border-purple-500');
-                    dropArea.classList.add('border-gray-600');
+                    dropArea.style.borderColor = 'var(--ctp-overlay0)';
+                    fileNameDisplay.style.color = 'var(--ctp-overlay1)';
                 }
             });
             
@@ -172,15 +547,17 @@
             
             ['dragenter', 'dragover'].forEach(eventName => {
                 dropArea.addEventListener(eventName, () => {
-                    dropArea.classList.add('border-purple-500');
-                    dropArea.classList.remove('border-gray-600');
+                    dropArea.style.borderColor = 'var(--ctp-mauve)';
+                    fileNameDisplay.style.color = 'var(--ctp-text)';
                 }, false);
             });
             
             ['dragleave', 'drop'].forEach(eventName => {
                 dropArea.addEventListener(eventName, () => {
-                    dropArea.classList.remove('border-purple-500');
-                    dropArea.classList.add('border-gray-600');
+                    if (!fileInput.files.length) {
+                        dropArea.style.borderColor = 'var(--ctp-overlay0)';
+                        fileNameDisplay.style.color = 'var(--ctp-overlay1)';
+                    }
                 }, false);
             });
             
@@ -244,11 +621,12 @@
                 // Update button styles
                 const buttons = document.querySelectorAll('[id^="filter-"]');
                 buttons.forEach(button => {
-                    button.classList.remove('bg-gray-700');
-                    button.classList.add('bg-gray-800');
+                    button.style.backgroundColor = 'var(--ctp-surface0)';
+                    button.classList.add('text-muted');
                 });
-                document.getElementById(`filter-${severity.toLowerCase()}`).classList.add('bg-gray-700');
-                document.getElementById(`filter-${severity.toLowerCase()}`).classList.remove('bg-gray-800');
+                const activeButton = document.getElementById(`filter-${severity.toLowerCase()}`);
+                activeButton.style.backgroundColor = 'var(--ctp-surface1)';
+                activeButton.classList.remove('text-muted');
                 
                 // Filter findings
                 const findings = document.querySelectorAll('.finding-item');
@@ -262,6 +640,11 @@
             }
             
             function displayResults(data) {
+                // Update mesh type
+                if (data.meshType) {
+                    document.getElementById('mesh-type-text').innerHTML = `Detected Mesh Type: <span style="color: var(--ctp-mauve);">${data.meshType}</span>`;
+                }
+                
                 // Update summary counts
                 document.getElementById('critical-count').textContent = data.summary.critical;
                 document.getElementById('high-count').textContent = data.summary.high;
@@ -294,13 +677,39 @@
                     };
                     
                     const badgeClasses = {
-                        'Critical': 'bg-red-900 bg-opacity-50 text-red-200',
-                        'High': 'bg-orange-900 bg-opacity-50 text-orange-200',
-                        'Medium': 'bg-yellow-900 bg-opacity-50 text-yellow-200',
-                        'Low': 'bg-green-900 bg-opacity-50 text-green-200'
+                        'Critical': 'text-red-200',
+                        'High': 'text-orange-200',
+                        'Medium': 'text-yellow-200',
+                        'Low': 'text-green-200'
                     };
                     
                     const color = colors[finding.severity] || colors['Medium'];
+                    
+                    // Generate NIST control badges
+                    let nistControlsHTML = '';
+                    if (finding.nistControls && finding.nistControls.length > 0) {
+                        const controlBadges = finding.nistControls.map(control => 
+                            `<span class="nist-control" data-title="${control.id}: ${control.title}">${control.id}</span>`
+                        ).join('');
+                        
+                        nistControlsHTML = `
+                            <div class="mt-3">
+                                <p class="text-sm font-medium text-gray-400">NIST 800-53 Rev. 5 Controls:</p>
+                                <div class="mt-1">${controlBadges}</div>
+                            </div>
+                        `;
+                    }
+                    
+                    // Generate NIST guidance section
+                    let nistGuidanceHTML = '';
+                    if (finding.nistGuidance) {
+                        nistGuidanceHTML = `
+                            <div class="nist-guidance mt-4">
+                                <span class="nist-guidance-title">NIST Guidance</span>
+                                <p class="text-sm text-gray-300">${finding.nistGuidance}</p>
+                            </div>
+                        `;
+                    }
                     
                     findingElement.innerHTML = `
                         <div class="flex items-start">
@@ -313,21 +722,23 @@
                             </div>
                             <div class="ml-3 flex-1">
                                 <div class="flex items-center justify-between">
-                                    <h3 class="text-lg font-medium text-gray-200">${finding.category}</h3>
-                                    <span class="px-2 py-1 text-xs rounded-full ${badgeClasses[finding.severity]}">
+                                    <h3 class="text-lg font-medium">${finding.category}</h3>
+                                    <span class="px-2 py-1 text-xs rounded-full" style="background-color: rgba(${finding.severity === 'Critical' ? '243, 139, 168' : finding.severity === 'High' ? '250, 179, 135' : finding.severity === 'Medium' ? '249, 226, 175' : '166, 227, 161'}, 0.3); color: var(--ctp-${finding.severity === 'Critical' ? 'red' : finding.severity === 'High' ? 'peach' : finding.severity === 'Medium' ? 'yellow' : 'green'});">
                                         ${finding.severity}
                                     </span>
                                 </div>
-                                <p class="mt-1 text-gray-300">${finding.message}</p>
+                                <p class="mt-1">${finding.message}</p>
                                 <div class="mt-2">
-                                    <p class="text-sm font-medium text-gray-400">Recommendation:</p>
-                                    <p class="text-sm text-gray-300">${finding.recommendation}</p>
+                                    <p class="text-sm font-medium text-muted">Recommendation:</p>
+                                    <p class="text-sm">${finding.recommendation}</p>
                                 </div>
                                 ${finding.location ? `
                                 <div class="mt-2">
-                                    <p class="text-sm font-medium text-gray-400">Location:</p>
-                                    <code class="text-sm bg-gray-700 text-gray-200 px-2 py-1 rounded">${finding.location}</code>
+                                    <p class="text-sm font-medium text-muted">Location:</p>
+                                    <code class="text-sm px-2 py-1 rounded" style="background-color: var(--ctp-surface0);">${finding.location}</code>
                                 </div>` : ''}
+                                ${nistControlsHTML}
+                                ${nistGuidanceHTML}
                             </div>
                         </div>
                     `;
