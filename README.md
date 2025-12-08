@@ -1,6 +1,8 @@
 # Service Mesh Configuration Security Analyzer
 
-A web application for analyzing service mesh configurations against security best practices. Currently supports Istio, Consul, and Linkerd service meshes.
+A local web application for analyzing service mesh configurations against security best practices. Currently supports Istio, Consul, and Linkerd service meshes.
+
+> **Note:** This tool is designed to run locally only. Do not deploy to public cloud environments as it processes potentially sensitive configuration files.
 
 ![](interface.png)
 
